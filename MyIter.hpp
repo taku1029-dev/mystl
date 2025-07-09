@@ -88,7 +88,7 @@ public:
 
   // Postfix ++ overloading
   ForwardIter<T> operator++(int){
-    InputIter<T> it = InputIter<T>(p_data);
+    ForwardIter<T> it = ForwardIter<T>(p_data);
     this->p_data++;
     return it;
   }
