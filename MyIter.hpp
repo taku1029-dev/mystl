@@ -71,4 +71,31 @@ public:
   }
 };
 
+template<typename T>
+class ForwardIter{
+public:
+  T* p_data;
+
+  ForwardIter(T* ptr){
+    this->p_data = ptr;
+  }
+
+  // Prefix ++ overloading
+  ForwardIter& operator++(){
+    this->p_data += 1;
+    return *this;
+  }
+
+  // Postfix ++ overloading
+  ForwardIter<T> operator++(int){
+    InputIter<T> it = InputIter<T>(p_data);
+    this->p_data++;
+    return it;
+  }
+
+  T& operator*(){
+    return *p_data;
+  }
+};
+
 #endif
