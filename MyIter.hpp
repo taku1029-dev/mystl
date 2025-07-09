@@ -34,4 +34,41 @@ public:
   }
 };
 
+template<typename T>
+class OutputIter{
+private:
+  T* p_data;
+
+  class Proxy{
+  private:
+    T* ptr;
+  public:
+    Proxy(T* ptr){
+      this->ptr = ptr;
+    }
+    void operator=(const T& data){
+      *ptr = data;
+    }
+  };
+public:
+  OutputIter(T* ptr){
+    this->p_data = ptr;
+  }
+
+  OutputIter& operator++(){
+    this->p_data += 1;
+    return *this;
+  }
+
+  OutputIter<T> operator++(int){
+    OutputIter<T> it = OutputIter<T>(p_data);
+    this->p_data++;
+    return it;
+  }
+
+  Proxy operator*(){
+    return Proxy(p_data);
+  }
+};
+
 #endif
