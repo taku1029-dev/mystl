@@ -98,4 +98,42 @@ public:
   }
 };
 
+template<typename T>
+class BidirectionalIter{
+public:
+  T* p_data;
+
+  BidirectionalIter(T* ptr){
+    this->p_data = ptr;
+  }
+
+  // Prefix overloading
+  BidirectionalIter& operator++(){
+    this->p_data += 1;
+    return *this;
+  }
+
+  BidirectionalIter<T> operator--(){
+    this->p_data -= 1;
+    return *this;
+  }
+
+  // Postfix overloading
+  BidirectionalIter<T> operator++(int){
+    BidirectionalIter<T> it = BidirectionalIter<T>(p_data);
+    this->p_data++;
+    return it;
+  }
+
+  BidirectionalIter<T> operator--(int){
+    BidirectionalIter<T> it = BidirectionalIter<T>(p_data);
+    this->p_data--;
+    return it;
+  }
+
+  T& operator*(){
+    return *p_data;
+  }
+};
+
 #endif
