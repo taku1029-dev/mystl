@@ -32,7 +32,7 @@ typedef struct MyVector
   void (*p_shrink_to_fit)(struct MyVector*);
   void (*p_resize)(struct MyVector*, size_t);
   void (*p_push_back)(struct MyVector*, void*);
-  void (*pop_back)(struct MyVector*);
+  void (*p_pop_back)(struct MyVector*);
   void (*p_insertAt)(struct MyVector*, void*, int);
   void (*p_deleteAt)(struct MyVector*, int);
 
