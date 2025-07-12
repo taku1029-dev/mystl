@@ -10,12 +10,12 @@ extern "C"{
 MyVector_t* constructor(size_t data_size);
 void move_constructor(MyVector_t*, void*);
 void destructor(MyVector_t* self);
-size_t size(MyVector_t* self);
-size_t capacity(MyVector_t* self);
+size_t getSize(MyVector_t* self);
+size_t getCapacity(MyVector_t* self);
 bool isEmpty(MyVector_t* self);
 void* at(MyVector_t* self, int index);
 void reserve(MyVector_t* self, size_t new_capacity);
-void resize(MyVector_t* self, size_t new_size);
+void resize(MyVector_t* self, size_t new_size, void* fill_value);
 void shrink_to_fit(MyVector_t* self);
 void push_back(MyVector_t* self, void* data);
 void pop_back(MyVector_t* self);
@@ -32,21 +32,21 @@ MyVector_t* constructor(size_t data_size){
   obj->capacity = 0;
   // Assign function pointers with corresponding function address
   obj->p_move_constructor = move_constructor;
-  obj->p_capacity = capacity;
-  obj->p_size = size;
+  obj->p_getCapacity = getCapacity;
+  obj->p_getSize = getSize;
   obj->p_isEmpty = isEmpty;
   obj->p_at = at;
   obj->p_reserve = reserve;
   obj->p_resize = resize;
   obj->p_shrink_to_fit = shrink_to_fit;
   obj->p_push_back = push_back;
+  obj->p_pop_back = pop_back;
   obj->p_insertAt = insertAt;
   obj->p_deleteAt = deleteAt;
   obj->p_destructor = destructor;
   return obj;
 }
 
-// Shallow copy impl
 void move_constructor(MyVector_t* self, void* new_data){
   memcpy(new_data, self->data, self->data_size * self->size);
   my_free(self->data);
@@ -58,12 +58,12 @@ void destructor(MyVector_t* self){
   my_free(self);
 }
 
-size_t size(struct MyVector* self){
+size_t getSize(struct MyVector* self){
   printf("Vector size: %lu\n", self->size);
   return self->size;
 }
 
-size_t capacity(MyVector_t* self){
+size_t getCapacity(MyVector_t* self){
   return self->capacity;
 }
 
@@ -88,42 +88,47 @@ void* at(MyVector_t* self, int index){
 void reserve(MyVector_t* self, size_t new_capacity){
   if(self->capacity >= new_capacity){
     printf("Vector has more capacity than needed!\n");
+    return;
   }
 
   // Reserve mem block
   void* p_newMem = my_malloc(new_capacity * self->data_size);
-  my_free(self->data);
+  self->p_move_constructor(self, p_newMem);
   // NO COPY IMPLEMENTED YET
   printf("move/copy constructor not defined yet...\n");
   printf("size will be set to 0 for now...\n");
-  self->size = 0; // Temporarily
-  self->data = p_newMem;
   self->capacity = new_capacity;
 }
 
 // C++14
 // When new_size smaller then current size, call pop_back (size - new_size) times
-// When larger, 
+// When larger, increase the capacity if needed, then fill up each elem to resize. 
 #if CPP_VERSION >= 14
-void resize(MyVector_t* self, size_t new_size){
+void resize(MyVector_t* self, size_t new_size, void* fill_value){
   if(new_size > self->size){
-    // Reserve memory
-    printf("Move constructor not impled yet...\n");
-    printf("Elems will be flushed out for now...\n");
-    self->p_reserve(self, new_size);
-    self->capacity = new_size;
+    if(self->capacity < new_size){
+      // Reserve memory
+      self->p_reserve(self, new_size);
+      self->capacity = new_size;
+    }
+    int counter = new_size - self->size;
+    while(counter != 0){
+      self->p_push_back(self, fill_value);
+      --counter;
+    }
   }else{
     int counter = self->size - new_size;
     while(counter != 0){
-      self->pop_back(self);
+      self->p_pop_back(self);
       --counter;
     }
   }
-  self->size = new_size;
 }
 #endif
 
 void shrink_to_fit(MyVector_t* self){
+  void* p_newMem = my_malloc(self->size * self->data_size);
+  self->p_move_constructor(self, p_newMem);
   return;
 }
 
@@ -139,10 +144,11 @@ void push_back(MyVector_t* self, void* data){
   }
 
   // allocate memory
+  void* des = self->data + self->data_size * self->size;
   void* src = data;
-  void* des = memcpy(self->data + self->data_size * self->size, data, self->data_size);
+  printf("original data: %d\tcopied data: %d\n", *(int*)des, *(int*)src);
+  memcpy(des, src, self->data_size);
   printf("des: %p src: %p\n", des, src);
-  printf("original data: %d\tcopied data: %d\n", *(int*)data, *(int*)des);
   self->size += 1;
 }
 
@@ -176,18 +182,6 @@ void deleteAt(MyVector_t* self, int index){
   
   memcpy(des, src, self->data_size * (self->size - index - 1));
   self->size -= 1;
-}
-
-int main(){
-  MyVector_t* vec = constructor(sizeof(int));
-  int n[] = {1, 2, 3};
-  void* p_n = &n;
-  vec->p_push_back(vec, (void*)&n[0]);
-  vec->p_push_back(vec, (void*)&n[1]);
-  vec->p_push_back(vec, (void*)&n[2]);
-  // Doesn't print as intended as vec doesn't have deep copy constructor.
-  printf("[0]: %d [1]: %d\n", *(int*)vec->p_at(vec, 0), *(int*)vec->p_at(vec, 1));
-  return 0;
 }
 
 #ifdef __cpluplus
